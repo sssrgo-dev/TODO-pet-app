@@ -1,34 +1,33 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import './App.css'
+import MenuBar from "./components/layout/MenuBar";
+import WorkSpace from "./components/layout/WorkSpase";
+import ProjectPicker from "./components/elements/ProjectPicker";
+import MenuItemsList from "./components/layout/MenuItemsList";
+import Logo from "./components/elements/Logo";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+    <div className="grid grid-cols-3+9 h-[100vh] text-gray-500">
+      <MenuBar>
+        <ProjectPicker>
+          {[{ item: "Project1" }, { item: "Project2" }, { item: "Project3" }]}
+        </ProjectPicker>
+        <MenuItemsList>
+          {[
+            { item: "Tasks", svg: "src/assets/tasks.svg", qty: 5 },
+            {
+              item: "Notifications",
+              svg: "src/assets/notification.svg",
+              qty: 7,
+            },
+            { item: "Analytics", svg: "src/assets/analytics.svg" },
+            { item: "Team", svg: "src/assets/team.svg", qty: 2 },
+          ]}
+        </MenuItemsList>
+        <Logo />
+      </MenuBar>
+      <WorkSpace />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
