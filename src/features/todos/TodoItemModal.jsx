@@ -1,8 +1,9 @@
 import { useState } from "react"
 import { useDispatch } from "react-redux"
 
-import TimeInput from "./TimeInput"
 import FieldsWrapper from "../../components/layout/FieldsWrapper"
+import { faXmark } from "@fortawesome/free-solid-svg-icons"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 
 function todoFormReducer(state, action) {
   switch (action.type) {
@@ -45,10 +46,10 @@ export default function TodoItemModal({ todo, onCloseModalClick }) {
 
   const dispatch = useDispatch()
 
-  const updateTodo = (e, type) => {
+  const updateTodo = (e) => {
     dispatch({
       type: "todos/todoUpdated",
-      payload: { ...todo, [type]: e.target.value },
+      payload: { name: e.target.value, id },
     })
   }
 
@@ -60,40 +61,35 @@ export default function TodoItemModal({ todo, onCloseModalClick }) {
     }
   }
 
-  const EditInputFieldOfType = ({ type, value }) => (
+  const editInputFieldOfType = (
     <input
       type="text"
       autoFocus
-      defaultValue={value}
+      defaultValue={name}
       onKeyDown={(e) => finishFieldOfTypeEditByEnter(e)}
-      onChange={(e) => {
-        updateTodo(e, type)
-      }}
+      onChange={updateTodo}
     />
   )
 
-  const EditDescription = ({ value }) => {
-    console.log("edit")
-    return (
-      <textarea
-        autoFocus
-        value={value}
-        onKeyDown={(e) => finishFieldOfTypeEditByEnter(e)}
-        onChange={(e) => updateTodo(e, "description")}
-      />
-    )
-  }
+  const editDescription = (
+    <textarea
+      autoFocus
+      value={description}
+      onKeyDown={(e) => finishFieldOfTypeEditByEnter(e)}
+      onChange={(e) => updateTodo(e, "description")}
+    />
+  )
 
   return (
     <form
       action=""
-      className="fixed flex  z-10 flex-col gap-2 border-solid border-[1px] rounded-md p-5  shadow-lg transition-all ease-in-out duration-1000 bg-stone-100"
+      className="fixed top-[50%] left-[50%] translate-y-[-50%] translate-x-[-50%] flex w-[80vw] z-10 flex-col gap-2 border-solid border-[1px] rounded-md p-5  shadow-lg transition-all ease-in-out duration-1000 bg-stone-100"
     >
       <div className="text-xs text-slate-300">created: {createdTime}</div>
       <FieldsWrapper>
         <div># {id}</div>
         {editableFieldsStatus.name ? (
-          <EditInputFieldOfType type={"name"} value={name} />
+          editInputFieldOfType
         ) : (
           <h3
             className="font-semibold"
@@ -111,7 +107,7 @@ export default function TodoItemModal({ todo, onCloseModalClick }) {
         <div className="text-xs text-slate-500">set priority: {priority}</div>
       </FieldsWrapper>
       {editableFieldsStatus.description ? (
-        <EditDescription value={description} />
+        editDescription
       ) : (
         <div
           onClick={() =>
@@ -139,7 +135,7 @@ export default function TodoItemModal({ todo, onCloseModalClick }) {
           onCloseModalClick()
         }}
       >
-        close x
+        <FontAwesomeIcon icon={faXmark} />
       </button>
     </form>
   )

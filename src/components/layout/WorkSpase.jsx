@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 
 import {
   DndContext,
@@ -22,13 +22,20 @@ import {
 import { allTodosInState } from "../../features/todos/todosSlice"
 import TodoList from "../../features/todos/TodoList"
 import TodoItemModal from "../../features/todos/TodoItemModal"
-import DndStatusColumns from "../../features/todos/DndColums"
-import StatusColumn from "./StatusColumn"
+import TodoItem from "../../features/todos/TodoItem"
+import DndDroppableStatusColumns from "../../features/todos/DndColums"
+import DroppableStatusColumn from "./StatusColumn"
 
-import { filter } from "ramda"
+import { filter, includes, map, sort, __ } from "ramda"
+
+const statusColumnsNamesList = ["queue", "development", "done"]
+const mapOverStatusColumnsNameList = map(__, statusColumnsNamesList)
+const statusColumnsNamesListIncludes = includes(__, statusColumnsNamesList)
 
 export default function WorkSpace() {
-  const todos = useSelector(allTodosInState)
+  const { todos, sortedByUser } = useSelector(allTodosInState)
+
+  const dispatch = useDispatch()
 
   const [opennedTodoId, setOpennedTodoId] = useState(null)
   const [draggedId, setDraggedId] = useState(null)
@@ -43,45 +50,61 @@ export default function WorkSpace() {
 
   return (
     <>
-      {!!opennedTodoId ? (
-        <TodoItemModal
-          todo={todos[opennedTodoId]}
-          onCloseModalClick={onCloseModalClick}
-        />
-      ) : null}
-
-      <div
-        className={`bg-gray-100 transition-all duration-300 ease-in-out pt-[80px] px-[40px] pb-[43px] relative ${
-          !!opennedTodoId ? "blur" : ""
-        }`}
-      >
-        <div className="flex gap-[36px]">
+      <div className={`bg-gray-100 pt-[80px] px-[40px] pb-[43px] relative`}>
+        {!!opennedTodoId ? (
+          <TodoItemModal
+            todo={todos[opennedTodoId]}
+            onCloseModalClick={onCloseModalClick}
+          />
+        ) : null}
+        <div
+          className={`flex gap-[36px] transition-all duration-300 ease-in-out ${
+            !!opennedTodoId ? "blur" : ""
+          }`}
+        >
           <DndContext
             collisionDetection={rectIntersection}
             onDragStart={handleDragStart}
-            // onDragEnd={handleDragEnd}
-            // onDragOver={handleDragOver}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
           >
-            <div className="flex gap-[36px]">
-              {["queue", "development", "done"].map((status, i) => {
-                return (
-                  <StatusColumn key={i} type={status}>
-                    {/* <SortableContext
-                      items={filter((todo) => todo.status == status, todos)}
-                    > */}
+            {/* <div className="flex gap-[36px]"> */}
+            {mapOverStatusColumnsNameList((status) => {
+              const todosOfStatus = filter(
+                (todo) => todo.status == status,
+                todos
+              )
+
+              const todosIdsSortedByUserOfStatus = filter(
+                (id) => Object.keys(todosOfStatus).includes(id + ""),
+                sortedByUser
+              )
+
+              return (
+                <DroppableStatusColumn
+                  key={status}
+                  id={status}
+                  active={todos[draggedId]?.status}
+                >
+                  <SortableContext
+                    items={todosIdsSortedByUserOfStatus}
+                    strategy={rectSortingStrategy}
+                  >
                     <TodoList
-                      todos={filter((todo) => todo.status == status, todos)}
+                      todos={todosOfStatus}
+                      todoIds={todosIdsSortedByUserOfStatus}
                       onCardClick={onCardClick}
+                      draggedId={draggedId}
                     />
-                    {/* </SortableContext> */}
-                  </StatusColumn>
-                )
-              })}
-            </div>
+                  </SortableContext>
+                </DroppableStatusColumn>
+              )
+            })}
+            {/* </div> */}
+            <DragOverlay wrapperElement="ul">
+              {draggedId ? <TodoItem todo={todos[draggedId]} /> : null}
+            </DragOverlay>
           </DndContext>
-          <DragOverlay wrapperElement="li">
-            {draggedId ? <Item value={`Item id: ${draggedId}`} /> : null}
-          </DragOverlay>
         </div>
       </div>
     </>
@@ -89,7 +112,30 @@ export default function WorkSpace() {
 
   function handleDragStart(event) {
     const { active } = event
-    console.log(event)
-    setActiveId(active.id)
+    setDraggedId(active.id)
+  }
+
+  function handleDragOver(event) {
+    const {
+      active,
+      over,
+      delta: { y },
+    } = event
+
+    const [activeId, overId] = [active?.id, over?.id]
+
+    if (!activeId || !overId || activeId === overId) return
+
+    // console.log("overId", overId)
+    // console.log("activeId", activeId)
+
+    dispatch({
+      type: "todos/todosMoved",
+      payload: { activeId, overId, y },
+    })
+  }
+
+  function handleDragEnd() {
+    setDraggedId(null)
   }
 }
